@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>楊大師八字排盤</title>
+    <title>八字排盤系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lunar-javascript/1.7.3/lunar.min.js"></script>
     <style>
@@ -11,26 +11,32 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
+            margin-bottom: 20px;
         }
         .bazi-cell {
             border: 1px solid #cbd5e0;
             border-radius: 0.375rem;
             padding: 0.5rem;
             text-align: center;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         .ten-gods {
             font-size: 0.75rem;
             color: #718096;
         }
-        .hidden {
-            display: none;
+        .element-power {
+            display: flex;
+            align-items: center;
+            margin-bottom: 3px;
         }
-        .fade-in {
-            animation: fadeIn 0.5s;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .element-label {
+            width: 30px;
+            display: inline-block;
+            text-align: right;
+            margin-right: 8px;
         }
         .element-bar {
             height: 4px;
@@ -39,14 +45,54 @@
         }
         .wood { color: #4CAF50; }
         .fire { color: #F44336; }
-        .earth { color: #FFC107; }
-        .metal { color: #9E9E9E; }
+        .earth { color: #8D6E63; }
+        .metal { color: #FF9900; }
         .water { color: #2196F3; }
+        .branch-wood { color: #4CAF50; }
+        .branch-fire { color: #F44336; }
+        .branch-earth { color: #8D6E63; }
+        .branch-metal { color: #FF9900; }
+        .branch-water { color: #2196F3; }
+        .yearly-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .yearly-pillar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            min-width: 80px;
+            background-color: #f8fafc;
+        }
+        .yearly-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4a5568;
+        }
+        .yearly-content {
+            font-size: 18px;
+            margin-bottom: 3px;
+        }
+        .bg-wood { background-color: #4CAF50; }
+        .bg-fire { background-color: #F44336; }
+        .bg-earth { background-color: #8D6E63; }
+        .bg-metal { background-color: #FF9900; }
+        .bg-water { background-color: #2196F3; }
+        .bg-wood-light { background-color: #e8f5e9; }
+        .bg-fire-light { background-color: #ffebee; }
+        .bg-earth-light { background-color: #f5f5f5; }
+        .bg-metal-light { background-color: #fff8e1; }
+        .bg-water-light { background-color: #e3f2fd; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="container mx-auto px-4 py-8 max-w-3xl">
-        <h1 class="text-3xl font-bold text-center text-red-600 mb-6">楊大師八字排盤</h1>
+        <h1 class="text-3xl font-bold text-center text-red-600 mb-6">八字排盤系統</h1>
         
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 class="text-xl font-semibold mb-4">輸入出生資訊</h2>
@@ -136,6 +182,10 @@
                         <h3 class="font-medium mb-2">五行分布</h3>
                         <div id="fiveElements" class="flex flex-col gap-1 text-xs"></div>
                     </div>
+                    <div>
+                        <h3 class="font-medium mb-2">用神分析</h3>
+                        <div id="usefulElements" class="text-sm text-gray-600"></div>
+                    </div>
                 </div>
             </div>
             
@@ -145,16 +195,16 @@
             </div>
             
             <div class="mb-6">
-                <h3 class="font-medium mb-2">命理分析</h3>
-                <div id="analysis" class="bg-gray-100 p-3 rounded-md text-sm"></div>
+                <h3 class="font-medium mb-2">流年運勢</h3>
+                <div id="yearlyLuck" class="bg-gray-100 p-3 rounded-md">
+                    <div id="yearlyPillars"></div>
+                    <div id="yearlyAnalysis" class="mt-4 text-sm"></div>
+                </div>
             </div>
             
             <div>
-                <h3 class="font-medium mb-2">流年運勢</h3>
-                <div id="yearlyLuck" class="bg-gray-100 p-3 rounded-md">
-                    <div id="currentYearLuck" class="text-sm"></div>
-                    <div id="nextYearLuck" class="text-sm mt-2"></div>
-                </div>
+                <h3 class="font-medium mb-2">命理分析</h3>
+                <div id="analysis" class="bg-gray-100 p-3 rounded-md text-sm"></div>
             </div>
         </div>
     </div>
@@ -164,13 +214,11 @@
             const generateBtn = document.getElementById('generateBtn');
             const resultContainer = document.getElementById('resultContainer');
             
-            // 设置默认日期为今天
+            // 设置默认日期为当前日期
             const today = new Date();
-            const formattedDate = today.toISOString().substr(0, 10);
-            document.getElementById('birthDate').value = formattedDate;
+            document.getElementById('birthDate').valueAsDate = today;
             
             generateBtn.addEventListener('click', function() {
-                // 获取输入值
                 const name = document.getElementById('name').value;
                 const calendarType = document.getElementById('calendarType').value;
                 const birthDate = document.getElementById('birthDate').value;
@@ -178,58 +226,58 @@
                 const gender = document.getElementById('gender').value;
                 const location = document.getElementById('location').value;
                 
-                // 简单验证
                 if (!birthDate) {
                     alert('請輸入出生日期');
                     return;
                 }
-                
+
                 try {
-                    // 生成八字命盘
                     generateBaziData(name, calendarType, birthDate, birthTime, gender, location);
-                    
-                    // 显示结果
                     resultContainer.classList.remove('hidden');
                     resultContainer.classList.add('fade-in');
-                    
-                    // 滚动到结果区域
                     resultContainer.scrollIntoView({ behavior: 'smooth' });
                 } catch (error) {
-                    console.error('生成命盘时出错:', error);
-                    alert('生成命盘时出错，请检查输入数据');
+                    console.error('生成命盤時出錯:', error);
+                    alert('生成命盤時出錯，請檢查輸入數據');
                 }
             });
             
-            function generateBaziData(name, calendarType, birthDate, birthTime, gender, location) {
-                // 解析日期时间
-                const [year, month, day] = birthDate.split('-').map(Number);
-                const [hour, minute] = birthTime.split(':').map(Number);
+            function getTimeText(hour) {
+                if (hour === 23 || hour < 1) return '子';
+                else if (hour >= 1 && hour < 3) return '丑';
+                else if (hour >= 3 && hour < 5) return '寅';
+                else if (hour >= 5 && hour < 7) return '卯';
+                else if (hour >= 7 && hour < 9) return '辰';
+                else if (hour >= 9 && hour < 11) return '巳';
+                else if (hour >= 11 && hour < 13) return '午';
+                else if (hour >= 13 && hour < 15) return '未';
+                else if (hour >= 15 && hour < 17) return '申';
+                else if (hour >= 17 && hour < 19) return '酉';
+                else if (hour >= 19 && hour < 21) return '戌';
+                else if (hour >= 21 && hour < 23) return '亥';
+            }
+
+            function generateBaziData(name, calendarType, birthDateStr, birthTimeStr, gender, location) {
+                const [year, month, day] = birthDateStr.split('-').map(Number);
+                let [hour, minute] = birthTimeStr.split(':').map(Number);
                 
-                // 创建日期对象
                 let dateObj;
                 if (calendarType === 'lunar') {
-                // 农历处理
-                const lunarDate = Lunar.fromYmd(year, month, day);
-                // 使用getYear()、getMonth()、getDay()方法获取日期组件
-                dateObj = new Date(
-                    lunarDate.getYear(),
-                    lunarDate.getMonth() - 1, // JavaScript月份是0-11
-                    lunarDate.getDay(),
-                    hour,
-                    minute
-                );
+                    const lunarDate = Lunar.fromYmd(year, month, day);
+                    dateObj = new Date(
+                        lunarDate.getSolarYear(),
+                        lunarDate.getSolarMonth() - 1,
+                        lunarDate.getSolarDay(),
+                        hour,
+                        minute
+                    );
                 } else {
-                    // 西历处理
                     dateObj = new Date(year, month - 1, day, hour, minute);
                 }
                 
-                // 使用lunar-javascript库计算
                 const lunarDate = Lunar.fromDate(dateObj);
-                
-                // 计算八字四柱
                 const bazi = lunarDate.getBaZi();
 
-                // 获取生肖 - 从年柱地支获取
                 const zodiacMap = {
                     '子': '鼠', '丑': '牛', '寅': '虎', '卯': '兔',
                     '辰': '龙', '巳': '蛇', '午': '马', '未': '羊',
@@ -238,18 +286,15 @@
                 const yearBranch = bazi[0].charAt(1);
                 const zodiac = zodiacMap[yearBranch] || '未知';
                 
-                // 获取节气
                 const currentMonth = dateObj.getMonth() + 1;
                 const currentDay = dateObj.getDate();
                 const term = getSolarTerm(currentMonth, currentDay);
-                            
-                // 更新UI显示
-                document.getElementById('yearPillar').textContent = bazi[0];
-                document.getElementById('monthPillar').textContent = bazi[1];
-                document.getElementById('dayPillar').textContent = bazi[2];
-                document.getElementById('hourPillar').textContent = bazi[3];
                 
-                // 计算十神
+                document.getElementById('yearPillar').innerHTML = formatPillarWithColor(bazi[0]);
+                document.getElementById('monthPillar').innerHTML = formatPillarWithColor(bazi[1]);
+                document.getElementById('dayPillar').innerHTML = formatPillarWithColor(bazi[2]);
+                document.getElementById('hourPillar').innerHTML = formatPillarWithColor(bazi[3]);
+                
                 const dayStem = bazi[2].charAt(0);
                 const tenGods = calculateTenGods(dayStem, bazi);
                 
@@ -258,7 +303,6 @@
                 document.getElementById('dayGod').textContent = tenGods[2];
                 document.getElementById('hourGod').textContent = tenGods[3];
                 
-                // 显示基本信息
                 const genderText = gender === 'male' ? '男' : '女';
                 const luckStartText = getLuckStartTimeText(dateObj, gender);
                 
@@ -278,65 +322,157 @@
 
                 document.getElementById('basicInfo').innerHTML = basicInfoHTML;
 
-                // 显示日期信息
-                const solarDate = `${dateObj.getFullYear()}年${dateObj.getMonth() + 1}月${dateObj.getDate()}日 ${hour}:${minute.toString().padStart(2, '0')}`;
+                const solarDate = `${dateObj.getFullYear()}年${(dateObj.getMonth() + 1).toString().padStart(2, '0')}月${dateObj.getDate().toString().padStart(2, '0')}日 ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
                 const lunarYear = lunarDate.getYear();
                 const lunarMonth = lunarDate.getMonth();
                 const lunarDay = lunarDate.getDay();
-                const timeText = hour < 12 ? '早子時' : '晚子時';
+                const timeText = getTimeText(hour);
                 
                 const dateInfoHTML = `
                     <p><strong>西曆</strong><br>${solarDate}</p>
-                    <p><strong>農曆</strong><br>${lunarYear}（${bazi[0]}）年${lunarMonth}月${lunarDay}日 ${timeText}</p>
+                    <p><strong>農曆</strong><br>${lunarYear}年${lunarMonth.toString().padStart(2, '0')}月${lunarDay.toString().padStart(2, '0')}日 ${timeText}</p>
                 `;
                 document.getElementById('dateInfo').innerHTML = dateInfoHTML;
                 
-                // 计算五行分布
-                calculateFiveElements(bazi);
+                // 初始化计算器并显示五行和用神
+                const luckCalculator = new YearlyLuckCalculator(bazi);
                 
-                // 计算大运
                 calculateLuckPillars(lunarDate, gender);
-                
-                // 命理分析
+                generateYearlyPillars(bazi);
                 generateAnalysis(bazi, gender);
-                
-                // 流年运势
-                generateYearlyLuck(bazi);
             }
             
-            // 修正后的起运时间计算函数
+            function getElementClass(char) {
+                const stems = {
+                    '甲': 'wood', '乙': 'wood',
+                    '丙': 'fire', '丁': 'fire',
+                    '戊': 'earth', '己': 'earth',
+                    '庚': 'metal', '辛': 'metal',
+                    '壬': 'water', '癸': 'water'
+                };
+                
+                const branches = {
+                    '寅': 'branch-wood', '卯': 'branch-wood',
+                    '巳': 'branch-fire', '午': 'branch-fire',
+                    '丑': 'branch-earth', '辰': 'branch-earth', 
+                    '未': 'branch-earth', '戌': 'branch-earth',
+                    '申': 'branch-metal', '酉': 'branch-metal',
+                    '亥': 'branch-water', '子': 'branch-water'
+                };
+                
+                return stems[char] || branches[char] || '';
+            }
+            
+            function formatPillarWithColor(pillar) {
+                const stem = pillar.charAt(0);
+                const branch = pillar.charAt(1);
+                const stemClass = getElementClass(stem);
+                const branchClass = getElementClass(branch);
+                
+                return `<span class="${stemClass}">${stem}</span><span class="${branchClass}">${branch}</span>`;
+            }
+            
             function getLuckStartTimeText(birthDate, gender) {
-                // 获取出生年月日
-                const birthYear = birthDate.getFullYear();
-                const birthMonth = birthDate.getMonth() + 1;
-                const birthDay = birthDate.getDate();
+                try {
+                    const lunarDate = Lunar.fromDate(birthDate);
+                    if (!lunarDate) return '起運時間計算錯誤';
+                    
+                    const bazi = lunarDate.getBaZi();
+                    const yearStem = bazi[0].charAt(0);
+                    
+                    const isYangYear = ['甲', '丙', '戊', '庚', '壬'].includes(yearStem);
+                    const isMale = gender === 'male';
+                    const isForward = (isYangYear && isMale) || (!isYangYear && !isMale);
+                    
+                    const nextTermDate = getNextSolarTerm(birthDate, isForward);
+                    if (!nextTermDate) return '無法計算起運時間';
+                    
+                    const diffDays = Math.floor((nextTermDate - birthDate) / (1000 * 60 * 60 * 24));
+                    
+                    const years = Math.floor(diffDays / 3);
+                    const months = Math.floor((diffDays % 3) * 4);
+                    const days = diffDays % 3;
+                    
+                    const startDate = new Date(birthDate);
+                    startDate.setFullYear(startDate.getFullYear() + years);
+                    startDate.setMonth(startDate.getMonth() + months);
+                    startDate.setDate(startDate.getDate() + days);
+                    
+                    return `出生${years}年${months}個月${days}天後起運 (約${startDate.getFullYear()}年${startDate.getMonth() + 1}月)`;
+                } catch (error) {
+                    console.error('計算起運時間時出錯:', error);
+                    return '起运时间计算错误';
+                }
+            }
+            
+            function getNextSolarTerm(date, isForward) {
+                const terms = [
+                    '小寒','大寒','立春','雨水','惊蛰','春分',
+                    '清明','谷雨','立夏','小满','芒种','夏至',
+                    '小暑','大暑','立秋','处暑','白露','秋分',
+                    '寒露','霜降','立冬','小雪','大雪','冬至'
+                ];
                 
-                // 计算起运时间（根据性别不同）
-                let startYear, startMonth;
-                if (gender === 'male') {
-                    // 男性：出生后1年7个月起运
-                    startYear = birthYear + 1;
-                    startMonth = birthMonth + 7;
+                const currentYear = date.getFullYear();
+                let termDates = [];
+                
+                for (let i = 0; i < terms.length; i++) {
+                    const lunarDate = Lunar.fromYmdHms(
+                        currentYear, 
+                        Math.floor(i/2)+1, 
+                        1, 
+                        date.getHours(), 
+                        date.getMinutes(), 
+                        date.getSeconds()
+                    );
+                    
+                    if (lunarDate && lunarDate.getJieQi) {
+                        const termDate = lunarDate.getJieQi()[terms[i]];
+                        if (termDate) {
+                            termDates.push(new Date(termDate.getTime()));
+                        }
+                    }
+                }
+
+                if (termDates.length === 0) {
+                    const defaultDate = new Date(date);
+                    defaultDate.setDate(defaultDate.getDate() + 15);
+                    return defaultDate;
+                }
+
+                if (isForward) {
+                    for (let i = 0; i < termDates.length; i++) {
+                        if (termDates[i] > date) {
+                            return termDates[i];
+                        }
+                    }
+                    const nextYearTerm = Lunar.fromYmdHms(
+                        currentYear + 1, 
+                        1, 
+                        1, 
+                        date.getHours(), 
+                        date.getMinutes(), 
+                        date.getSeconds()
+                    ).getJieQi()[terms[0]];
+                    
+                    return new Date(nextYearTerm.getTime());
                 } else {
-                    // 女性：出生后8年1个月起运
-                    startYear = birthYear + 8;
-                    startMonth = birthMonth + 1;
+                    for (let i = termDates.length - 1; i >= 0; i--) {
+                        if (termDates[i] < date) {
+                            return termDates[i];
+                        }
+                    }
+                    const prevYearTerm = Lunar.fromYmdHms(
+                        currentYear - 1, 
+                        12, 
+                        1, 
+                        date.getHours(), 
+                        date.getMinutes(), 
+                        date.getSeconds()
+                    ).getJieQi()[terms[terms.length - 1]];
+                    
+                    return new Date(prevYearTerm.getTime());
                 }
-                
-                // 处理月份超过12的情况
-                if (startMonth > 12) {
-                    startYear += Math.floor(startMonth / 12);
-                    startMonth = startMonth % 12;
-                }
-                
-                // 计算实际天数差（更精确的计算）
-                const startDate = new Date(startYear, startMonth - 1, birthDay);
-                const diffTime = startDate - birthDate;
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                const years = Math.floor(diffDays / 365);
-                const months = Math.floor((diffDays % 365) / 30);
-                
-                return `出生${years}年${months}個月後起運 (約${startYear}年${startMonth}月)`;
             }
             
             function getSolarTerm(month, day) {
@@ -379,140 +515,49 @@
                 });
             }
             
-            function calculateFiveElements(bazi) {
-                const fiveElements = {
-                    '木': 0,
-                    '火': 0,
-                    '土': 0,
-                    '金': 0,
-                    '水': 0
-                };
-                
-                // 天干五行
-                const stemElements = {
-                    '甲': '木', '乙': '木',
-                    '丙': '火', '丁': '火',
-                    '戊': '土', '己': '土',
-                    '庚': '金', '辛': '金',
-                    '壬': '水', '癸': '水'
-                };
-                
-                // 地支藏干五行
-                const branchHiddenElements = {
-                    '子': ['水'],
-                    '丑': ['土', '水', '金'],
-                    '寅': ['木', '火', '土'],
-                    '卯': ['木'],
-                    '辰': ['土', '木', '水'],
-                    '巳': ['火', '金', '土'],
-                    '午': ['火', '土'],
-                    '未': ['土', '火', '木'],
-                    '申': ['金', '水', '土'],
-                    '酉': ['金'],
-                    '戌': ['土', '金', '火'],
-                    '亥': ['水', '木']
-                };
-                
-                // 计算天干五行
-                bazi.forEach(pillar => {
-                    const stem = pillar.charAt(0);
-                    fiveElements[stemElements[stem]] += 1;
-                    
-                    const branch = pillar.charAt(1);
-                    const hiddenElements = branchHiddenElements[branch];
-                    hiddenElements.forEach(el => fiveElements[el] += 0.3);
-                });
-                
-                // 计算百分比
-                const total = Object.values(fiveElements).reduce((a, b) => a + b, 0);
-                const percentages = {};
-                for (const el in fiveElements) {
-                    percentages[el] = Math.round((fiveElements[el] / total) * 100);
-                }
-                
-                // 更新UI
-                const fiveElementsHTML = `
-                    <div class="flex items-center">
-                        <span class="w-8 wood">木</span>
-                        <div class="flex-1 bg-green-100 rounded-full h-4">
-                            <div class="element-bar bg-green-500" style="width: ${percentages['木']}%"></div>
-                        </div>
-                        <span class="ml-2 w-8 wood">${percentages['木']}%</span>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="w-8 fire">火</span>
-                        <div class="flex-1 bg-red-100 rounded-full h-4">
-                            <div class="element-bar bg-red-500" style="width: ${percentages['火']}%"></div>
-                        </div>
-                        <span class="ml-2 w-8 fire">${percentages['火']}%</span>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="w-8 earth">土</span>
-                        <div class="flex-1 bg-yellow-100 rounded-full h-4">
-                            <div class="element-bar bg-yellow-500" style="width: ${percentages['土']}%"></div>
-                        </div>
-                        <span class="ml-2 w-8 earth">${percentages['土']}%</span>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="w-8 metal">金</span>
-                        <div class="flex-1 bg-gray-100 rounded-full h-4">
-                            <div class="element-bar bg-gray-500" style="width: ${percentages['金']}%"></div>
-                        </div>
-                        <span class="ml-2 w-8 metal">${percentages['金']}%</span>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="w-8 water">水</span>
-                        <div class="flex-1 bg-blue-100 rounded-full h-4">
-                            <div class="element-bar bg-blue-500" style="width: ${percentages['水']}%"></div>
-                        </div>
-                        <span class="ml-2 w-8 water">${percentages['水']}%</span>
-                    </div>
-                `;
-                
-                document.getElementById('fiveElements').innerHTML = fiveElementsHTML;
-            }
-            
             function calculateLuckPillars(lunarDate, gender) {
-                // 计算起运时间
                 const birthYear = lunarDate.getYear();
                 const birthMonth = lunarDate.getMonth();
                 
-                let startYear, startMonth;
-                if (gender === 'male') {
-                    startYear = birthYear + 1;
-                    startMonth = birthMonth + 7;
-                } else {
-                    startYear = birthYear + 8;
-                    startMonth = birthMonth + 1;
-                }
+                const yearStem = lunarDate.getBaZi()[0].charAt(0);
+                const isYang = ['甲', '丙', '戊', '庚', '壬'].includes(yearStem);
+                const isMale = gender === 'male';
+                const isForward = (isYang && isMale) || (!isYang && !isMale);
                 
-                // 处理月份超过12的情况
-                if (startMonth > 12) {
-                    startYear += Math.floor(startMonth / 12);
-                    startMonth = startMonth % 12;
-                }
+                const birthMonthPillar = lunarDate.getBaZi()[1];
+                const stemsOrder = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+                const branchesOrder = ['寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥', '子', '丑'];
+                
+                let currentStemIndex = stemsOrder.indexOf(birthMonthPillar.charAt(0));
+                let currentBranchIndex = branchesOrder.indexOf(birthMonthPillar.charAt(1));
                 
                 const luckPillars = [];
                 
-                // 生成8个大运，每个大运10年
                 for (let i = 0; i < 8; i++) {
-                    const age = i * 10;
-                    const year = startYear + i * 10;
-                    // 使用当前年份的干支作为大运
-                    const pillar = Lunar.fromDate(new Date(year, 0, 1)).getBaZi()[0];
-                    luckPillars.push(pillar);
+                    if (isForward) {
+                        currentStemIndex = (currentStemIndex + 1) % 10;
+                        currentBranchIndex = (currentBranchIndex + 1) % 12;
+                    } else {
+                        currentStemIndex = (currentStemIndex - 1 + 10) % 10;
+                        currentBranchIndex = (currentBranchIndex - 1 + 12) % 12;
+                    }
+                    
+                    const pillar = stemsOrder[currentStemIndex] + branchesOrder[currentBranchIndex];
+                    luckPillars.push({
+                        pillar,
+                        ageRange: `${i * 10}-${i * 10 + 9}歲`
+                    });
                 }
                 
                 let luckPillarsHTML = `
                     <div class="flex overflow-x-auto gap-4 py-2">
                 `;
                 
-                luckPillars.forEach((pillar, index) => {
-                    const age = index * 10;
+                luckPillars.forEach((item, index) => {
                     luckPillarsHTML += `
                         <div class="flex-shrink-0 text-center bg-gray-100 rounded p-2">
-                            <div class="font-medium">${age}-${age + 9}歲</div>
-                            <div class="text-lg">${pillar}</div>
+                            <div class="font-medium">${item.ageRange}</div>
+                            <div class="text-lg">${formatPillarWithColor(item.pillar)}</div>
                         </div>
                     `;
                 });
@@ -521,57 +566,384 @@
                 document.getElementById('luckPillars').innerHTML = luckPillarsHTML;
             }
             
+            // 修复年份干支计算
+            function getYearPillar(year) {
+                const stems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+                const branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+                
+                // 修正计算逻辑：天干=(年份-4)%10，地支=(年份-4)%12
+                const stemIndex = (year - 4) % 10;
+                const branchIndex = (year - 4) % 12;
+                
+                return stems[stemIndex] + branches[branchIndex];
+            }
+            
+            function generateYearlyPillars(bazi) {
+                const currentYear = new Date().getFullYear();
+                const yearsToShow = 5;
+                
+                const yearlyPillarsContainer = document.getElementById('yearlyPillars');
+                yearlyPillarsContainer.innerHTML = '';
+                
+                const yearlyGrid = document.createElement('div');
+                yearlyGrid.className = 'yearly-container';
+                yearlyPillarsContainer.appendChild(yearlyGrid);
+                
+                const luckCalculator = new YearlyLuckCalculator(bazi);
+                
+                for (let i = 0; i < yearsToShow; i++) {
+                    const year = currentYear + i;
+                    const yearPillar = getYearPillar(year);
+                    
+                    const result = luckCalculator.calculate(yearPillar);
+                    
+                    const pillarDiv = document.createElement('div');
+                    pillarDiv.className = 'yearly-pillar';
+                    
+                    const yearTitle = document.createElement('div');
+                    yearTitle.className = 'yearly-title';
+                    yearTitle.textContent = `${year}年`;
+                    pillarDiv.appendChild(yearTitle);
+                    
+                    const pillarContent = document.createElement('div');
+                    pillarContent.className = 'yearly-content';
+                    pillarContent.innerHTML = formatPillarWithColor(yearPillar);
+                    pillarDiv.appendChild(pillarContent);
+                    
+                    const godDiv = document.createElement('div');
+                    godDiv.className = 'ten-gods';
+                    godDiv.textContent = result.tenGod;
+                    pillarDiv.appendChild(godDiv);
+                    
+                    yearlyGrid.appendChild(pillarDiv);
+                }
+                
+                const analysisDiv = document.getElementById('yearlyAnalysis');
+                const currentYearResult = luckCalculator.calculate(getYearPillar(currentYear));
+                
+                analysisDiv.innerHTML = `
+                    <p><strong class="text-red-600">${currentYear}年運勢:</strong> 
+                    ${currentYearResult.summary}</p>
+                    ${currentYearResult.clashWarning ? 
+                      `<p class="mt-1 text-orange-600">注意：${currentYearResult.clashWarning}</p>` : ''}
+                `;
+            }
+            
             function generateAnalysis(bazi, gender) {
                 const dayStem = bazi[2].charAt(0);
                 const dayBranch = bazi[2].charAt(1);
                 
-                // 简单命理分析
+                // 計算胎元
+                const monthPillar = bazi[1];
+                const stemsOrder = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+                const branchesOrder = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+                
+                const monthStem = monthPillar.charAt(0);
+                const monthBranch = monthPillar.charAt(1);
+                
+                const stemIndex = stemsOrder.indexOf(monthStem);
+                const fetalStem = stemsOrder[(stemIndex + 1) % 10];
+                
+                const branchIndex = branchesOrder.indexOf(monthBranch);
+                const fetalBranch = branchesOrder[(branchIndex + 3) % 12];
+                
+                const fetalYuan = fetalStem + fetalBranch;
+                
+                // 用神分析
+                const calculator = new YearlyLuckCalculator(bazi);
+                const usefulElements = calculator.usefulElements;
+                
                 let analysis = '';
                 
-                // 日主强弱分析
-                analysis += `<p class="mb-2"><strong class="text-red-600">日主分析:</strong> <span class="font-bold">${dayStem}${dayBranch}</span>日主，${Math.random() > 0.5 ? '身強' : '身弱'}。</p>`;
+                analysis += `<p class="mb-2"><strong class="text-red-600">日主分析:</strong> <span class="${getElementClass(dayStem)} font-bold">${dayStem}</span><span class="${getElementClass(dayBranch)} font-bold">${dayBranch}</span>日主</p>`;
                 
-                // 用神喜忌
-                const usefulElements = ['木', '火', '土', '金', '水'];
-                const useful = usefulElements[Math.floor(Math.random() * 5)];
-                const avoid = usefulElements[Math.floor(Math.random() * 5)];
-                analysis += `<p class="mb-2"><strong class="text-red-600">用神喜忌:</strong> 喜<span class="${getElementClass(useful)} font-bold">${useful}</span>，忌<span class="${getElementClass(avoid)} font-bold">${avoid}</span></p>`;
+                analysis += `<p class="mb-2"><strong class="text-red-600">胎元:</strong> ${formatPillarWithColor(fetalYuan)}</p>`;
                 
-                // 性格分析
+                analysis += `<p class="mb-2"><strong class="text-red-600">用神喜忌:</strong> 喜${usefulElements.map(el => `<span class="${el === '木' ? 'wood' : el === '火' ? 'fire' : el === '土' ? 'earth' : el === '金' ? 'metal' : 'water'}">${el}</span>`).join('、')}</p>`;
+                
                 const personalities = ['積極進取', '溫和謙遜', '熱情開朗', '細心謹慎', '穩重可靠'];
                 analysis += `<p class="mb-2"><strong class="text-red-600">性格特質:</strong> ${personalities[Math.floor(Math.random() * 5)]}</p>`;
                 
-                // 事业建议
                 const careers = ['管理', '藝術', '技術', '金融', '教育'];
                 analysis += `<p class="mb-2"><strong class="text-red-600">事業建議:</strong> 適合${careers[Math.floor(Math.random() * 5)]}相關領域</p>`;
                 
                 document.getElementById('analysis').innerHTML = analysis;
             }
-            
-            function getElementClass(element) {
-                switch(element) {
-                    case '木': return 'wood';
-                    case '火': return 'fire';
-                    case '土': return 'earth';
-                    case '金': return 'metal';
-                    case '水': return 'water';
-                    default: return '';
+
+            class YearlyLuckCalculator {
+                constructor(bazi, manualUsefulElements = null) {
+                    this.bazi = Array.isArray(bazi) ? bazi : [];
+                    this.dayStem = this.bazi[2]?.charAt(0) || '';
+                    
+                    this.branchHiddenStems = {
+                        '子': ['癸'],
+                        '丑': ['己','癸','辛'],
+                        '寅': ['甲','丙','戊'],
+                        '卯': ['乙'],
+                        '辰': ['戊','乙','癸'],
+                        '巳': ['丙','庚','戊'],
+                        '午': ['丁','己'],
+                        '未': ['己','丁','乙'],
+                        '申': ['庚','壬','戊'],
+                        '酉': ['辛'],
+                        '戌': ['戊','辛','丁'],
+                        '亥': ['壬','甲'],
+                        '': []
+                    };
+                    
+                    this.clashRelations = {
+                        '子': ['午', '未', '卯'],
+                        '丑': ['未', '戌', '午'],
+                        '寅': ['申', '巳'],
+                        '卯': ['酉', '辰', '子'],
+                        '辰': ['戌', '卯'],
+                        '巳': ['亥', '寅'],
+                        '午': ['子', '丑'],
+                        '未': ['丑', '子'],
+                        '申': ['寅', '亥'],
+                        '酉': ['卯', '戌'],
+                        '戌': ['辰', '丑'],
+                        '亥': ['巳', '申'],
+                        '': []
+                    };
+                    
+                    this.usefulElements = manualUsefulElements || this._calculateUsefulElements();
                 }
-            }
-            
-            function generateYearlyLuck(bazi) {
-                const currentYear = new Date().getFullYear();
-                const nextYear = currentYear + 1;
                 
-                document.getElementById('currentYearLuck').innerHTML = 
-                    `<strong class="text-red-600">${currentYear}年運勢:</strong> 事業有發展機會，財運中等，需注意健康和人際關係。`;
+                _calculateUsefulElements() {
+                    const elementPower = this._calculateElementPower();
+                    this._displayElementPower(elementPower);
+                    
+                    const dayElement = this.getStemElement(this.dayStem);
+                    const supportElements = {
+                        '木': ['水', '木'],
+                        '火': ['木', '火'],
+                        '土': ['火', '土'],
+                        '金': ['土', '金'],
+                        '水': ['金', '水']
+                    };
+                    
+                    let supportPower = 0;
+                    let weakenPower = 0;
+                    
+                    Object.entries(elementPower).forEach(([element, power]) => {
+                        if (supportElements[dayElement].includes(element)) {
+                            supportPower += power;
+                        } else {
+                            weakenPower += power;
+                        }
+                    });
+
+                    const isStrong = supportPower > weakenPower;
+                    const usefulElements = [];
+                    
+                    if (isStrong) {
+                        usefulElements.push(...this.getWeakeningElements(dayElement));
+                    } else {
+                        usefulElements.push(...supportElements[dayElement]);
+                    }
+
+                    const monthBranch = this.bazi[1]?.charAt(1) || '';
+                    this.addSeasonalAdjustment(monthBranch, usefulElements);
+
+                    return [...new Set(usefulElements)];
+                }
                 
-                document.getElementById('nextYearLuck').innerHTML = 
-                    `<strong class="text-red-600">${nextYear}年運勢:</strong> 可能面臨一些挑戰，但貴人運佳，宜穩健行事。`;
+                _calculateElementPower() {
+                    const elementPower = { '木':0, '火':0, '土':0, '金':0, '水':0 };
+                    
+                    this.bazi.forEach(pillar => {
+                        const stem = pillar?.charAt(0) || '';
+                        const branch = pillar?.charAt(1) || '';
+                        
+                        const stemElement = this.getStemElement(stem);
+                        if (stemElement) elementPower[stemElement] += 1;
+                        
+                        const hiddenStems = this.branchHiddenStems[branch] || [];
+                        hiddenStems.forEach(hiddenStem => {
+                            const hiddenElement = this.getStemElement(hiddenStem);
+                            if (hiddenElement) elementPower[hiddenElement] += 0.3;
+                        });
+                    });
+                    
+                    return elementPower;
+                }
+                
+                _displayElementPower(elementPower) {
+                    const total = Object.values(elementPower).reduce((a, b) => a + b, 0);
+                    const percentages = {};
+                    
+                    for (const el in elementPower) {
+                        percentages[el] = total > 0 ? Math.round((elementPower[el] / total) * 100) : 0;
+                    }
+                    
+                    let html = '';
+                    for (const el in percentages) {
+                        const colorClass = el === '木' ? 'wood' : 
+                                         el === '火' ? 'fire' : 
+                                         el === '土' ? 'earth' : 
+                                         el === '金' ? 'metal' : 'water';
+                        const bgColorClass = el === '木' ? 'bg-wood-light' : 
+                                           el === '火' ? 'bg-fire-light' : 
+                                           el === '土' ? 'bg-earth-light' : 
+                                           el === '金' ? 'bg-metal-light' : 'bg-water-light';
+                        const barColorClass = el === '木' ? 'bg-wood' : 
+                                           el === '火' ? 'bg-fire' : 
+                                           el === '土' ? 'bg-earth' : 
+                                           el === '金' ? 'bg-metal' : 'bg-water';
+                        
+                        html += `
+                            <div class="element-power">
+                                <span class="element-label ${colorClass}">${el}</span>
+                                <div class="flex-1 ${bgColorClass} rounded-full h-4">
+                                    <div class="element-bar ${barColorClass} h-full rounded-full" style="width: ${percentages[el]}%"></div>
+                                </div>
+                                <span class="ml-2 ${colorClass}">${percentages[el]}%</span>
+                            </div>
+                        `;
+                    }
+                    
+                    const fiveElementsDiv = document.getElementById('fiveElements');
+                    if (fiveElementsDiv) {
+                        fiveElementsDiv.innerHTML = html;
+                    }
+                    
+                    const usefulEl = this.usefulElements || [];
+                    const usefulElementsDiv = document.getElementById('usefulElements');
+                    if (usefulElementsDiv) {
+                        usefulElementsDiv.innerHTML = `
+                            <p>喜用神：${usefulEl.map(el => {
+                                const colorClass = el === '木' ? 'wood' : 
+                                                 el === '火' ? 'fire' : 
+                                                 el === '土' ? 'earth' : 
+                                                 el === '金' ? 'metal' : 'water';
+                                return `<span class="${colorClass}">${el}</span>`;
+                            }).join('、')}</p>
+                        `;
+                    }
+                }
+                
+                getStemElement(stem) {
+                    const map = {
+                        '甲': '木', '乙': '木',
+                        '丙': '火', '丁': '火',
+                        '戊': '土', '己': '土',
+                        '庚': '金', '辛': '金',
+                        '壬': '水', '癸': '水'
+                    };
+                    return map[stem] || '';
+                }
+                
+                getWeakeningElements(dayElement) {
+                    const weakeningMap = {
+                        '木': ['金', '火', '土'],
+                        '火': ['水', '土', '金'],
+                        '土': ['木', '金', '水'],
+                        '金': ['火', '水', '木'],
+                        '水': ['土', '木', '火']
+                    };
+                    return weakeningMap[dayElement];
+                }
+                
+                addSeasonalAdjustment(monthBranch, usefulElements) {
+                    const seasonMap = {
+                        '寅': '寒需火', '卯': '寒需火',
+                        '巳': '燥需水', '午': '燥需水',
+                        '申': '濕需火', '酉': '濕需火',
+                        '亥': '寒需火', '子': '寒需火'
+                    };
+                    
+                    const adjustment = seasonMap[monthBranch];
+                    if (adjustment?.includes('需火')) usefulElements.push('火');
+                    if (adjustment?.includes('需水')) usefulElements.push('水');
+                }
+                
+                getTenGod(yearPillar) {
+                    const yearStem = yearPillar.charAt(0);
+                    const stemsOrder = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+                    const dayStemIndex = stemsOrder.indexOf(this.dayStem);
+                    const yearStemIndex = stemsOrder.indexOf(yearStem);
+                    
+                    const tenGodsMap = [
+                        '比肩', '劫財', '食神', '傷官', '偏財', 
+                        '正財', '七殺', '正官', '偏印', '正印'
+                    ];
+                    
+                    return tenGodsMap[(yearStemIndex - dayStemIndex + 10) % 10];
+                }
+                
+                checkBranchClash(yearPillar) {
+                    const yearBranch = yearPillar.charAt(1);
+                    const warnings = [];
+                    
+                    this.bazi.forEach(pillar => {
+                        const branch = pillar.charAt(1);
+                        if (this.clashRelations[branch]?.includes(yearBranch)) {
+                            warnings.push(`${branch}與${yearBranch}相沖`);
+                        }
+                    });
+                    
+                    return warnings.length > 0 ? warnings.join('，') : null;
+                }
+                
+                isUseful(yearPillar) {
+                    if (this.usefulElements.length === 0) return false;
+                    
+                    const stemElementMap = {
+                        '甲': '木', '乙': '木',
+                        '丙': '火', '丁': '火',
+                        '戊': '土', '己': '土',
+                        '庚': '金', '辛': '金',
+                        '壬': '水', '癸': '水'
+                    };
+                    
+                    const yearStem = yearPillar.charAt(0);
+                    if (this.usefulElements.includes(stemElementMap[yearStem])) {
+                        return true;
+                    }
+                    
+                    const yearBranch = yearPillar.charAt(1);
+                    const hiddenStems = this.branchHiddenStems[yearBranch] || [];
+                    return hiddenStems.some(stem => 
+                        this.usefulElements.includes(stemElementMap[stem])
+                    );
+                }
+                
+                generateSummary(tenGod, usefulElement) {
+                    const tenGodAnalysis = {
+                        '比肩': '人際競爭增強，需注意合作關係',
+                        '劫財': '財務波動較大，謹防破財',
+                        '食神': '才華發揮順暢，利創作與學習',
+                        '傷官': '思維活躍但易挑剔，注意言行',
+                        '偏財': '意外財運機會增多',
+                        '正財': '穩定收入為主，宜保守理財',
+                        '七殺': '壓力與挑戰並存，需沉著應對',
+                        '正官': '事業運提升，有利職場發展',
+                        '偏印': '學習運佳，適合進修',
+                        '正印': '貴人運強，易得長輩幫助'
+                    };
+                    
+                    let summary = tenGodAnalysis[tenGod] || '運勢平穩';
+                    if (usefulElement) summary += '（用神得力，吉兆）';
+                    
+                    return summary;
+                }
+                
+                calculate(yearPillar) {
+                    const tenGod = this.getTenGod(yearPillar);
+                    const clashWarning = this.checkBranchClash(yearPillar);
+                    const usefulElement = this.isUseful(yearPillar);
+                    
+                    return {
+                        pillar: yearPillar,
+                        tenGod,
+                        clashWarning,
+                        usefulElement,
+                        summary: this.generateSummary(tenGod, usefulElement)
+                    };
+                }
             }
         });
     </script>
 </body>
 </html>
-
-
