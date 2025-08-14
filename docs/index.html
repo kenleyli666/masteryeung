@@ -92,7 +92,7 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="container mx-auto px-4 py-8 max-w-3xl">
-        <h1 class="text-3xl font-bold text-center text-red-600 mb-6">鳴火師傅八字排盤</h1>
+        <h1 class="text-3xl font-bold text-center text-red-600 mb-6">八字排盤系統</h1>
         
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 class="text-xl font-semibold mb-4">輸入出生資訊</h2>
@@ -112,8 +112,8 @@
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">出生日期</label>
-                    <input type="date" id="birthDate" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">出生日期 <span class="text-gray-500 text-xs">(格式：年-月-日)</span></label>
+                    <input type="text" id="birthDate" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="2000-01-01">
                 </div>
                 
                 <div>
@@ -182,10 +182,10 @@
                         <h3 class="font-medium mb-2">五行分布</h3>
                         <div id="fiveElements" class="flex flex-col gap-1 text-xs"></div>
                     </div>
-                    <div>
+                    <!-- <div>
                         <h3 class="font-medium mb-2">用神分析</h3>
                         <div id="usefulElements" class="text-sm text-gray-600"></div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
             
@@ -215,8 +215,8 @@
             const resultContainer = document.getElementById('resultContainer');
             
             // 设置默认日期为当前日期
-            const today = new Date();
-            document.getElementById('birthDate').valueAsDate = today;
+            // const today = new Date();
+            // document.getElementById('birthDate').valueAsDate = today;
             
             generateBtn.addEventListener('click', function() {
                 const name = document.getElementById('name').value;
@@ -243,18 +243,18 @@
             });
             
             function getTimeText(hour) {
-                if (hour === 23 || hour < 1) return '子';
-                else if (hour >= 1 && hour < 3) return '丑';
-                else if (hour >= 3 && hour < 5) return '寅';
-                else if (hour >= 5 && hour < 7) return '卯';
-                else if (hour >= 7 && hour < 9) return '辰';
-                else if (hour >= 9 && hour < 11) return '巳';
-                else if (hour >= 11 && hour < 13) return '午';
-                else if (hour >= 13 && hour < 15) return '未';
-                else if (hour >= 15 && hour < 17) return '申';
-                else if (hour >= 17 && hour < 19) return '酉';
-                else if (hour >= 19 && hour < 21) return '戌';
-                else if (hour >= 21 && hour < 23) return '亥';
+                if (hour === 23 || hour < 1) return '子時';
+                else if (hour >= 1 && hour < 3) return '丑時';
+                else if (hour >= 3 && hour < 5) return '寅時';
+                else if (hour >= 5 && hour < 7) return '卯時';
+                else if (hour >= 7 && hour < 9) return '辰時';
+                else if (hour >= 9 && hour < 11) return '巳時';
+                else if (hour >= 11 && hour < 13) return '午時';
+                else if (hour >= 13 && hour < 15) return '未時';
+                else if (hour >= 15 && hour < 17) return '申時';
+                else if (hour >= 17 && hour < 19) return '酉時';
+                else if (hour >= 19 && hour < 21) return '戌時';
+                else if (hour >= 21 && hour < 23) return '亥時';
             }
 
             function generateBaziData(name, calendarType, birthDateStr, birthTimeStr, gender, location) {
@@ -947,4 +947,3 @@
     </script>
 </body>
 </html>
-
